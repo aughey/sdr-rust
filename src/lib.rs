@@ -35,6 +35,20 @@ pub fn average_with_trig(readings: &[(f64, f64)]) -> (f64, f64) {
     (angle_degrees, magnitude)
 }
 
+pub fn average_optimized(readings: &[(f64, f64)]) -> (f64, f64) {
+    // Calculate constants once at runtime
+    let base = Complex::new(0.0, 2.0 * PI / 360.0).exp();
+    
+    // Single pass accumulation with direct complex multiplication
+    let total: Complex<f64> = readings.iter().fold(Complex::new(0.0, 0.0), |acc, &(angle, magnitude)| {
+        acc + magnitude * base.powf(angle)
+    });
+
+    let result = total / readings.len() as f64;
+    let angle = result.ln() / base.ln();
+    (angle.re, result.norm())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -82,6 +96,42 @@ mod tests {
             (170.0, 1.0),
         ];
         let (angle, magnitude) = average(&readings);
+        assert_relative_eq!(angle, -170.0, epsilon = 0.1);
+        assert_relative_eq!(magnitude, 0.106, epsilon = 0.1);
+    }
+
+    #[test]
+    fn test_average_optimized() {
+        let readings = vec![
+            (12.0, 1.0),
+            (15.0, 1.0),
+            (13.0, 1.0),
+            (9.0, 1.0),
+            (16.0, 1.0),
+        ];
+        let (angle, magnitude) = average_optimized(&readings);
+        assert_relative_eq!(angle, 13.0, epsilon = 0.1);
+        assert_relative_eq!(magnitude, 1.0, epsilon = 0.1);
+
+        let readings = vec![
+            (358.0, 1.0),
+            (1.0, 1.0),
+            (359.0, 1.0),
+            (355.0, 1.0),
+            (2.0, 1.0),
+        ];
+        let (angle, magnitude) = average_optimized(&readings);
+        assert_relative_eq!(angle, -1.0, epsilon = 0.1);
+        assert_relative_eq!(magnitude, 1.0, epsilon = 0.1);
+
+        let readings = vec![
+            (210.0, 1.0),
+            (290.0, 1.0),
+            (10.0, 1.0),
+            (90.0, 1.0),
+            (170.0, 1.0),
+        ];
+        let (angle, magnitude) = average_optimized(&readings);
         assert_relative_eq!(angle, -170.0, epsilon = 0.1);
         assert_relative_eq!(magnitude, 0.106, epsilon = 0.1);
     }
