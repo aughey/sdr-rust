@@ -3,7 +3,8 @@ use std::f64::consts::PI;
 
 /// Creates a base complex number for degree angle calculations
 pub fn create_degrees_base() -> Complex<f64> {
-    Complex::new(0.0, 2.0 * PI / 360.0).exp()
+    const TAU: f64 = 2.0 * PI;
+    Complex::new(0.0, TAU / 360.0).exp()
 }
 
 fn angle_mag_to_complex((angle, magnitude): &(f64, f64), base: Complex<f64>) -> Complex<f64> {
